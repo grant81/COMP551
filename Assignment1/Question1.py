@@ -36,13 +36,13 @@ def calTarget (x , w):
         y = y + math.pow(x,i)*w[m-i][0]
     return y
 
-def produceResultPoint (testDataPath):
+def produceResultPoint (testDataPath,w):
     with open(testDataPath) as trainData1:
         readCSV = csv.reader(trainData1,delimiter=',')
         inputVar = []
         targetVar = []
         result = []
-        w = getW('Datasets\\Dataset_1_train.csv')
+
         for row in readCSV:
             inputVar.append(float(row[0]))
             targetVar.append(float(row[1]))
@@ -80,8 +80,8 @@ def calMSE (testDataPath,w):
     #mean square error calculation !!!!!!!!!!!!!!!!!question
     Error = np.dot(np.transpose(YsXw),YsXw)/targetVar.shape[0]
     return Error
+#
 
-#produceResultPoint('Datasets\\Dataset_1_train.csv')
 # w = getW('Datasets\\Dataset_1_train.csv')
 # print(calMSE('Datasets\\Dataset_1_valid.csv'),w)
 
@@ -125,7 +125,7 @@ def findLamda():
         temp.append(lamda)
         temp.append(calMSE('Datasets\\Dataset_1_valid.csv',w)[0][0])
         MSESet.append(temp)
-        lamda += 0.01
+        lamda += 0.005
     lamda = 0.0
     while(lamda<=1):
         w = getWstar('Datasets\\Dataset_1_train.csv',lamda)
@@ -133,9 +133,13 @@ def findLamda():
         temp.append(lamda)
         temp.append(calMSE('Datasets\\Dataset_1_train.csv',w)[0][0])
         MSESet2.append(temp)
-        lamda += 0.01
+        lamda += 0.005
     print(MSESet)
     print(MSESet2)
+    plt.plot(MSESet,'r-')
+    plt.plot(MSESet2,'b-')
+    plt.axis([0,200,0,10])
+    plt.show()
     minErr = 0.0
     minLamda = 0.0
     minW =[]
@@ -148,9 +152,9 @@ def findLamda():
             minErr = MSESet[i][1]
             minLamda = MSESet[i][0]
             minW = wSet[i]
-    print(minErr,minLamda,minW)
-    plt.plot(MSESet,'b')
-    plt.plot(MSESet2,'r')
-    plt.show()
+    print(minErr,minLamda)
+
+# w = getWstar('Datasets\\Dataset_1_train.csv',0.02)
+# produceResultPoint('Datasets\\Dataset_1_valid.csv',w)
 findLamda()
 
