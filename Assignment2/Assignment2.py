@@ -1,6 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import math
+from sklearn import preprocessing
 from random import shuffle
 import csv
 ##Q1
@@ -114,7 +115,7 @@ def LDA(trainingPath):
     return w
 
 
-def test (testFilePath,w):
+def testLDA (testFilePath,w):
     with open(testFilePath) as file:
         readCSV = csv.reader(file, delimiter=',')
         X = []
@@ -151,6 +152,64 @@ def test (testFilePath,w):
     print(c1, c1c)
     print(c2, c2c)
 # generateData('hwk2_datasets_corrected\\DS1_Cov.txt','hwk2_datasets_corrected\\DS1_m_0.txt','hwk2_datasets_corrected\\DS1_m_1.txt')
-w = LDA('hwk2_datasets_corrected\\DS1_train.csv')
-test('hwk2_datasets_corrected\\DS1_test.csv',w)
+# w = LDA('hwk2_datasets_corrected\\DS1_train.csv')
+# testLDA('hwk2_datasets_corrected\\DS1_test.csv',w)
 
+def kNN (trainX,inputX,k):
+
+    distanceSet = []
+    for i in range (len(trainX)):
+        sum = 0
+        for j in range(len(inputX)-1):
+            sum += (trainX[i][j]-inputX[j])**2
+        distanceSet.append([np.sqrt(sum),i,trainX[i][len(trainX[0])-1]])
+    distanceSet = sorted(distanceSet)
+    neighbors = []
+    for i in range (k):
+        neighbors.append(distanceSet[i][2])
+    result = np.sum(neighbors)
+    if (result>0):
+        return 1
+    else:
+        return -1
+
+def testKNN (trainingSet, testingSet):
+    with open(trainingSet) as file:
+        readCSV = csv.reader(file, delimiter=',')
+        X = []
+        for row in readCSV:
+            inputVarTemp = []
+            for i in range(len(row)):
+                inputVarTemp.append(float(row[i]))
+            X.append(inputVarTemp)
+    X = np.array(X,dtype='float')
+    X = preprocessing.normalize(X,axis=0)
+    X[:, :-1] = preprocessing.normalize(X[:, :-1], axis=0)
+    with open(testingSet) as file:
+        readCSV = csv.reader(file, delimiter=',')
+        XTest = []
+        for row in readCSV:
+            inputVarTemp = []
+            for i in range(len(row)):
+                inputVarTemp.append(float(row[i]))
+            XTest.append(inputVarTemp)
+    XTest = np.array(XTest,dtype='float')
+
+
+    for j in range(3,17,2):
+        hit = 0
+        c1Count = 0
+        c2Count = 0
+        for i in range(len(XTest)):
+            ans = kNN(X,XTest[i],j)
+            if (ans ==  XTest[i][len(XTest[0])-1]):
+                hit +=1
+            if (ans >0):
+                c2Count +=1
+            else:
+                c1Count +=1
+        print('k = '+str(j))
+        print(hit/len(XTest))
+        print(c1Count,c2Count)
+
+testKNN('hwk2_datasets_corrected\\DS1_train.csv','hwk2_datasets_corrected\\DS1_test.csv')
