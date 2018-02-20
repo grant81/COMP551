@@ -141,8 +141,9 @@ def kNN (trainX,inputX,k):
     neighbors = []
     for i in range (k):
         neighbors.append(distanceSet[i][2])
+
     result = np.sum(neighbors)
-    if (result>0):
+    if (result > 0):
         return 1
     else:
         return -1
@@ -252,7 +253,7 @@ def testKNNSci (trainingSet, testingSet):
                 inputVarTemp.append(float(row[i]))
             X.append(inputVarTemp)
     X = np.array(X,dtype='float')
-    # X[:, :-1] = preprocessing.normalize(X[:, :-1], axis=0)
+    X[:, :-1] = preprocessing.normalize(X[:, :-1], axis=0)
     Y = np.transpose(X)[20]
 
     with open(testingSet) as file:
@@ -264,26 +265,38 @@ def testKNNSci (trainingSet, testingSet):
                 inputVarTemp.append(float(row[i]))
             XTest.append(inputVarTemp)
     XTest = np.array(XTest,dtype='float')
-    # XTest[:,:-1] = preprocessing.normalize(XTest[:,:-1],axis=0)
-    # neigh = KNeighborsClassifier(n_neighbors=11)
+    XTest[:,:-1] = preprocessing.normalize(XTest[:,:-1],axis=0)
+    # neigh = KNeighborsClassifier(n_neighbors=3)
     # neigh.fit(X[:,:-1], Y)
     clf = LinearDiscriminantAnalysis()
     clf.fit(X[:,:-1], Y)
-    hit = 0
-    c2Count = 0
-    c1Count = 0
+    TPTN = 0.0
+    TPFP = 0
+    TNFN = 0
+    TP = 0
+    TN = 0
+    # run again the best case
     for i in range(len(XTest)):
-        # ans = neigh.predict([XTest[i][:-1]])
-        ans = clf.predict([XTest[i][:-1]])
-        if (ans ==  XTest[i][len(XTest[0])-1]):
-            hit +=1
-        if (ans >0):
-            c2Count +=1
+        ans = clf.predict([X[i][:-1]])
+        if (ans > 0):
+            if (ans == X[i][len(X[0]) - 1]):
+                TPTN += 1
+                TN += 1
+            TNFN += 1
         else:
-            c1Count +=1
-    print('k = '+str(11))
-    print(hit/len(XTest))
-    print(c1Count,c2Count)
+            if (ans == X[i][len(X[0]) - 1]):
+                TPTN += 1
+                TP += 1
+            TPFP += 1
+    accuracy = TPTN / (TPFP + TNFN)
+    precision = TP / TPFP
+    recall = TP / (TP + TNFN - TN)
+    print('treating class 2 as positive')
+    print('the Best K is ' + str((1)))
+    print('Accuracy = ' + str(accuracy))
+    print('Precision = ' + str(precision))
+    print('Recall = ' + str(recall))
+    print('F1 Measure = ' + str(2 * precision * recall / (precision + recall)))
 
 
 def generateData2(mean_11,mean_12,mean_13,mean_21,mean_22,mean_23,cov_1,cov_2,cov_3):
@@ -358,13 +371,12 @@ def generateData2(mean_11,mean_12,mean_13,mean_21,mean_22,mean_23,cov_1,cov_2,co
 
 
 
-
-# testKNN('hwk2_datasets_corrected\\DS1_train.csv','hwk2_datasets_corrected\\DS1_test.csv')
-# testKNNSci('hwk2_datasets_corrected\\DS1_train.csv','hwk2_datasets_corrected\\DS1_test.csv')
-generateData2('hwk2_datasets_corrected\\DS2_c1_m1.txt','hwk2_datasets_corrected\\DS2_c1_m2.txt',
-              'hwk2_datasets_corrected\\DS2_c1_m3.txt','hwk2_datasets_corrected\\DS2_c2_m1.txt',
-              'hwk2_datasets_corrected\\DS2_c2_m2.txt','hwk2_datasets_corrected\\DS2_c2_m3.txt',
-              'hwk2_datasets_corrected\\DS2_Cov1.txt','hwk2_datasets_corrected\\DS2_Cov2.txt','hwk2_datasets_corrected\\DS2_Cov3.txt')
-
-# w = LDA('hwk2_datasets_corrected\\DS1_train.csv')
-# testLDA('hwk2_datasets_corrected\\DS1_test.csv',w)
+applyKNN('hwk2_datasets_corrected\\DS1_train.csv','hwk2_datasets_corrected\\DS1_test.csv',3)
+testKNNSci('hwk2_datasets_corrected\\DS2_train.csv','hwk2_datasets_corrected\\DS2_test.csv')
+# generateData2('hwk2_datasets_corrected\\DS2_c1_m1.txt','hwk2_datasets_corrected\\DS2_c1_m2.txt',
+#               'hwk2_datasets_corrected\\DS2_c1_m3.txt','hwk2_datasets_corrected\\DS2_c2_m1.txt',
+#               'hwk2_datasets_corrected\\DS2_c2_m2.txt','hwk2_datasets_corrected\\DS2_c2_m3.txt',
+#               'hwk2_datasets_corrected\\DS2_Cov1.txt','hwk2_datasets_corrected\\DS2_Cov2.txt','hwk2_datasets_corrected\\DS2_Cov3.txt')
+#
+w = LDA('hwk2_datasets_corrected\\DS2_train.csv')
+testLDA('hwk2_datasets_corrected\\DS2_test.csv',w)
