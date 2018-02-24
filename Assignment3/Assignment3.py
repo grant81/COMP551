@@ -123,18 +123,16 @@ def getFreqBagOfWord(reviews):
     return FBWMatrix
 
 
-def NativeBayes(trainingX, trainingY, testingX, testingY):
+def NativeBayesGaussian(trainingX, trainingY, testingX, testingY):
     clf = GaussianNB()
     clf.fit(trainingX, trainingY)
     preditY = []
-    hit = 0
     for i in range(len(testingX)):
         ans = clf.predict([testingX[i]])
-        if ans == testingY[i]:
-            hit += 1
         preditY.append(ans)
-
-    print('F1 weighted = ' + str(metrics.f1_score(testingY, preditY, average='weighted')))
+    f1 = metrics.f1_score(testingY, preditY, average='weighted')
+    # print('F1 Score = ' + str(f1))
+    return f1
 
 
 def BernoulliNativeBayes(trainingX, trainingY, testingX, testingY, a):
@@ -173,8 +171,8 @@ def randomClassifier(trainingX, trainingY, testingX, testingY):
     print('Uniform Random F1 Score= ' + str(metrics.f1_score(testingY, preditYUniform, average='weighted')))
 
 
-def LinearSVM(trainingX, trainingY, testingX, testingY, C):
-    clf = LinearSVC(C=C)
+def LinearSVM(trainingX, trainingY, testingX, testingY, C, dual):
+    clf = LinearSVC(C=C,dual = dual)
     clf.fit(trainingX, trainingY)
     preditY = []
     for i in range(len(testingX)):
@@ -184,8 +182,8 @@ def LinearSVM(trainingX, trainingY, testingX, testingY, C):
     return f1Score
 
 
-def decisionTree(trainingX, trainingY, testingX, testingY, maxLeaf):
-    clf = DecisionTreeClassifier(criterion='entropy', max_leaf_nodes=maxLeaf)
+def decisionTree(trainingX, trainingY, testingX, testingY, maxLeaf,min_samples_split, max_features):
+    clf = DecisionTreeClassifier(criterion='entropy', max_leaf_nodes=maxLeaf, min_samples_split = min_samples_split)
     clf.fit(trainingX, trainingY)
     preditY = []
     for i in range(len(testingX)):
@@ -198,18 +196,27 @@ def decisionTree(trainingX, trainingY, testingX, testingY, maxLeaf):
 def plotHyperparameterTrainingProgress(input):
     a = np.array(input, dtype='float')
     a = np.transpose(a)
-    plt.plot(a[1], a[0], 'bo')
+    plt.plot(a[1], a[0])
     plt.title('Selecting HyperParameter')
     plt.xlabel('Hyperparameter')
     plt.ylabel('F1 Score')
     plt.show()
 
+vocab = buildVocabulary('datasets//IMDB-train.txt','outputdatasets//IMDB-vocab.txt')
+buildReview('datasets//IMDB-train.txt',vocab,'outputdatasets//IMDB-train.txt')
+buildReview('datasets//IMDB-test.txt',vocab,'outputdatasets//IMDB-test.txt')
+buildReview('datasets//IMDB-valid.txt',vocab,'outputdatasets//IMDB-valid.txt')
+vocab = buildVocabulary('datasets//yelp-train.txt','outputdatasets//yelp-vocab.txt')
+buildReview('datasets//yelp-train.txt',vocab,'outputdatasets//IMDB-train.txt')
+buildReview('datasets//yelp-test.txt',vocab,'outputdatasets//IMDB-test.txt')
+buildReview('datasets//yelp-valid.txt',vocab,'outputdatasets//IMDB-valid.txt')
+
 
 trainResult = readReviews('outputdatasets//yelp-train.txt')
-trainX = getBinaryBagOfWord(trainResult[0])
+trainX = getFreqBagOfWord(trainResult[0])
 trainY = trainResult[1]
 testResult = readReviews('outputdatasets//yelp-valid.txt')
-testX = getBinaryBagOfWord(testResult[0]).toarray()
+testX = getFreqBagOfWord(testResult[0]).toarray()
 testY = testResult[1]
 # LinearSVM(trainX,trainY,testX,testY)
 # BernoulliNativeBayes(trainX,trainY,testX,testY)
@@ -218,11 +225,19 @@ testY = testResult[1]
 # randomClassifier(trainX,trainY,testX,testY)
 
 f1s = []
-# for i in range (500,100,-10):
-#     print('depth of the tree = '+str(i))
-#     f1s.append([decisionTree(trainX,trainY,testX,testY,i),i])
-# f1s.sort()
-# print('the optimal number of leafs is '+f1s[0][1]+', it achieves a F1 score of '+ f1s[0][0])
+for i in range (300,100,-10):
+    max_features = 1.0
+    for j in range(10):
+        max_features -= 0.05
+        min_sample_split =0.01
+        for k in range (10):
+            min_sample_split *= 0.5
+            print('depth of the tree = '+str(i))
+            f1s.append([decisionTree(trainX,trainY,testX,testY,i,min_sample_split,max_features),i,min_sample_split,max_features])
+f1s.sort()
+print('the optimal number of leafs is '+f1s[0][1]+', min sample split is:'
+      + f1s[0][2] +', max features is :'+f1s[0][3]+', it achieves a F1 score of '+ f1s[0][0])
+
 # a = 5
 # for i in range(0,30):
 #
@@ -233,11 +248,5 @@ f1s = []
 # plotHyperparameterTrainingProgress(f1s)
 # print('the optimal alpha is ' + str(f1s[len(f1s)-1][1]) + ', it achieves a F1 score of ' + str(f1s[len(f1s)-1][0]))
 
-C = 1
-for i in range(0, 30):
-    C = C * 0.5 ** i
-    # print('alpha = '+str(a))
-    f1s.append([LinearSVM(trainX, trainY, testX, testY, C), C])
-f1s.sort()
-plotHyperparameterTrainingProgress(f1s)
-print('the optimal C is ' + str(f1s[len(f1s) - 1][1]) + ', it achieves a F1 score of ' + str(f1s[len(f1s) - 1][0]))
+a = [[1,2],[2,3],[3,5],[7,6]]
+plotHyperparameterTrainingProgress(a)
